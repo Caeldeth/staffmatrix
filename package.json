@@ -1,0 +1,33 @@
+{
+  "name": "staffmatrix",
+  "version": "1.0.0",
+  "description": "A node.js powered staff management system",
+  "main": "server.js",
+  "scripts": {
+    "test": "jest",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Caeldeth/staffmatrix.git"
+  },
+  "keywords": [
+    "CMS",
+    "Staff"
+  ],
+  "author": "Caeldeth",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Caeldeth/staffmatrix/issues"
+  },
+  "homepage": "https://github.com/Caeldeth/staffmatrix#readme",
+  "dependencies": {
+    "console.table": "^0.10.0",
+    "express": "^4.17.1",
+    "inquirer": "^8.2.0",
+    "mysql2": "^2.3.3"
+  },
+  "devDependencies": {
+    "jest": "^27.3.1"
+  }
+}
