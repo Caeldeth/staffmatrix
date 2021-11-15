@@ -26,4 +26,5 @@ function getTime(){
     return curTime
 }
 
-module.exports = {getDate, getTime, getRoles, getManagers, getDepartments};
+
+module.exports = {getDate, getTime};

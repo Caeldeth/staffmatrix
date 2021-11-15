@@ -1,11 +1,13 @@
 const inquirer = require("inquirer");
 var clear = require('clear-screen');
 const chalk = require('chalk');
-const { getDate, getTime, getDepartments } = require('../utils/functions');
+const { getDate, getTime } = require('../utils/functions');
 const pressAnyKey = require('press-any-key');
 const connection = require('../db/connection');
+const { connect } = require("../db/connection");
 require('console.table');
-
+let roles;
+let managers;
 
 function mainMenuPrompt() {
     chalk.green(
@@ -209,6 +211,8 @@ Customer Assistance and Problem Reporting, call the Help desk at 612-555-1234.
 `
     )
 );
+getRoles();
+getMgrs();
 pressAnyKey(chalk.green("Press any key to continue..."))
     .then(() => {
         menuScreen();
@@ -521,35 +525,30 @@ TERMID: BOSS01                      A D D  D E P A R T M E N T
       })
 };
 
-function addRole(){};
-clear();
+function addRole(){;
+    clear();
 
-console.log(
-    chalk.green(
+    console.log(
+        chalk.green(
 `SIGNON                           BUSINESSCO LLC AT INDUSTRY PARK       DATE: ${getDate()}
 SYSTEM: STAFFMATRIX       BUSINESS ADMINISTRATIVE INFORMATION SYSTEMS  TIME: ${getTime()}
 TERMID: BOSS01                            A D D  R O L E
 =========================================================================================
-`))
-var query =
-`SELECT d.dep_id, d.dep_name, FORMAT(r.salary,0) AS budget
-FROM employee e
-JOIN roles r
-ON e.role_id = r.rol_id
-JOIN department d
-ON d.dep_id = r.department_id
-GROUP BY d.dep_id, d.dep_name`
+    `))
+    var query =
+    `SELECT dep_id, dep_name
+    FROM department
+    GROUP BY dep_name`
 
-connection.query(query, function (err, res) {
-if (err) throw err;
+    connection.query(query, function (err, res) {
+        if (err) throw err;
 
-const departmentChoices = res.map(({ id, name }) => ({
-  value: id, name: `${id} ${name}`
-}));
-
-
-promptAddRole(departmentChoices);
-});
+        const departmentChoices = res.map(({ dep_id, dep_name }) => ({
+        value: dep_id, name: `${dep_id} ${dep_name}`
+        }));
+    promptAddRole(departmentChoices);
+    });
+};
 
 function promptAddRole(departmentChoices) {
 
@@ -577,14 +576,13 @@ function promptAddRole(departmentChoices) {
         var query = `INSERT INTO roles SET ?`
   
         connection.query(query, {
-          title: answer.title,
-          salary: answer.salary,
+          title: answer.roleTitle,
+          salary: answer.roleSalary,
           department_id: answer.departmentId
         },
           function (err, res) {
             if (err) throw err;
   
-            console.table(res);
             pressAnyKey(chalk.green("Role added! Press any key to view roles..."))
             .then(() => {
                 viewRoles();
@@ -593,6 +591,22 @@ function promptAddRole(departmentChoices) {
   
       });
   }
+  function getRoles(){
+    var query = `SELECT rol_id, title FROM roles`
+    connection.query(query, function (err, res) {
+        if (err) throw err;
+        roles = res;
+      });
+}
+
+function getMgrs(){
+    var query = `SELECT emp_id, first_name, last_name, CONCAT_WS(' ', first_name, last_name) AS managers FROM employee`
+
+  connection.query(query, function (err, res) {
+    if (err) throw err;
+    managers = res;
+  });   
+}
 
 function addEmp(){
     clear();
@@ -604,67 +618,323 @@ SYSTEM: STAFFMATRIX       BUSINESS ADMINISTRATIVE INFORMATION SYSTEMS  TIME: ${g
 TERMID: BOSS01                        A D D  E M P L O Y E E
 =========================================================================================
     `))
-    var query =
-    `SELECT r.rol_id, r.title, r.salary 
-    FROM role AS r`
-
-  connection.query(query, function (err, res) {
-    if (err) throw err;
-
-    const roleChoices = res.map(({ id, title, salary }) => ({
-      value: id, title: `${title}`, salary: `${salary}`
-    }));
-
-    promptInsert(roleChoices);
-  });
-}
-
-function promptInsert(roleChoices) {
-
+    getMgrs();
+    getRoles();
+    let roleOptions = [];
+    for (i = 0; i < roles.length; i++) {
+      roleOptions.push(Object(roles[i]));
+    };
+    let managerOptions = [];
+    for (i = 0; i < managers.length; i++) {
+      managerOptions.push(Object(managers[i]));
+    }
   inquirer
     .prompt([
-      {
+    {
         type: "input",
         name: "first_name",
         message: "What is the employee's first name?"
-      },
-      {
+    },
+    {
         type: "input",
         name: "last_name",
         message: "What is the employee's last name?"
-      },
-      {
+    },
+    {
         type: "list",
-        name: "roleId",
+        name: "role_id",
         message: "What is the employee's role?",
-        choices: roleChoices
-      },
+        choices: function() {
+            var choiceArray= [];
+            for (var i = 0; i < roleOptions.length; i++) {
+                choiceArray.push(roleOptions[i].title)
+            }
+            return choiceArray;
+        }
+    },
+    {
+        type: "list",
+        name: "manager_id",
+        message: "Who is the employee's manager?",
+        choices: function() {
+            var choiceArray = [];
+            for (var i = 0; i < managerOptions.length; i++) {
+              choiceArray.push(managerOptions[i].managers)
+            }
+            return choiceArray;
+        }
+    },
     ])
     .then(function (answer) {
-      var query = `INSERT INTO employee SET ?`
-      connection.query(query,
-        {
-          first_name: answer.first_name,
-          last_name: answer.last_name,
-          role_id: answer.roleId,
-          manager_id: answer.managerId,
-        },
-        function (err, res) {
+        for (i = 0; i < roleOptions.length; i++) {
+            if (roleOptions[i].title === answer.role_id) {
+                role_id = roleOptions[i].rol_id
+            }
+        }
+      
+        for (i = 0; i < managerOptions.length; i++) {
+            if (managerOptions[i].managers === answer.manager_id) {
+                manager_id = managerOptions[i].emp_id
+            }
+          }
+
+        connection.query(
+            `INSERT INTO employee 
+                (first_name, last_name, role_id, manager_id) 
+            VALUES (
+                '${answer.first_name}', 
+                '${answer.last_name}', 
+                 ${role_id}, 
+                 ${manager_id})`, 
+        (err, res) => {
           if (err) throw err;
-          console.table(res);
           pressAnyKey(chalk.green("Employee added! Press any key to view employees..."))
           .then(() => {
-              viewRoles();
+              viewAll();
           })
         });
     });
 }
 
+function delEmp(){
+    clear();
 
-function delEmp(){};
-function delDep(){};
-function delRole(){};
-function updEmpRole(){};
+    console.log(
+        chalk.green(
+`SIGNON                           BUSINESSCO LLC AT INDUSTRY PARK       DATE: ${getDate()}
+SYSTEM: STAFFMATRIX       BUSINESS ADMINISTRATIVE INFORMATION SYSTEMS  TIME: ${getTime()}
+TERMID: BOSS01                    D E L E T E  E M P L O Y E E
+=========================================================================================
+    `))
+
+    var query =
+    `SELECT emp_id, first_name, last_name
+    FROM employee`
+    connection.query(query, function (err, res) {
+        if (err) throw err;
+            const delEmpChoices = res.map(({ emp_id, first_name, last_name }) => ({
+            value: emp_id, name: `${first_name} ${last_name}`
+            }));
+        promptDelEmp(delEmpChoices);
+    });
+};
+
+function promptDelEmp(delEmpChoices) {
+    inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "emp_id",
+        message: "Which employee do you want to remove?",
+        choices: delEmpChoices
+      }
+    ])
+    .then(function (answer) {
+
+      var query = `DELETE FROM employee WHERE ?`;
+      // when finished prompting, insert a new item into the db with that info
+      connection.query(query, { emp_id: answer.emp_id }, function (err, res) {
+        if (err) throw err;
+
+        pressAnyKey(chalk.green("Employee removed! Press any key to view employees..."))
+        .then(() => {
+            viewAll();
+        })
+      });
+    });
+}
+
+function delDep(){
+    clear();
+
+    console.log(
+        chalk.green(
+`SIGNON                           BUSINESSCO LLC AT INDUSTRY PARK       DATE: ${getDate()}
+SYSTEM: STAFFMATRIX       BUSINESS ADMINISTRATIVE INFORMATION SYSTEMS  TIME: ${getTime()}
+TERMID: BOSS01                   D E L E T E  D E P A R T M E N T
+=========================================================================================
+    `))
+
+    var query =
+    `SELECT dep_id, dep_name
+    FROM department`
+    connection.query(query, function (err, res) {
+        if (err) throw err;
+            const delDepChoices = res.map(({ dep_id, dep_name }) => ({
+            value: dep_id, name: `${dep_name}`
+            }));
+        promptDelDep(delDepChoices);
+    });
+};
+
+function promptDelDep(delDepChoices) {
+    inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "dep_id",
+        message: "Which department do you want to remove?",
+        choices: delDepChoices
+      }
+    ])
+    .then(function (answer) {
+
+      var query = `DELETE FROM department WHERE ?`;
+      // when finished prompting, insert a new item into the db with that info
+      connection.query(query, { dep_id: answer.dep_id }, function (err, res) {
+        if (err) throw err;
+
+        pressAnyKey(chalk.green("Department removed! Press any key to view departments..."))
+        .then(() => {
+            viewDeps();
+        })
+      });
+    });
+}
+
+function delRole(){
+    clear();
+
+    console.log(
+        chalk.green(
+`SIGNON                           BUSINESSCO LLC AT INDUSTRY PARK       DATE: ${getDate()}
+SYSTEM: STAFFMATRIX       BUSINESS ADMINISTRATIVE INFORMATION SYSTEMS  TIME: ${getTime()}
+TERMID: BOSS01                        D E L E T E  R O L E
+=========================================================================================
+    `))
+
+    var query =
+    `SELECT rol_id, title
+    FROM roles`
+    connection.query(query, function (err, res) {
+        if (err) throw err;
+            const delRolChoices = res.map(({ rol_id, title }) => ({
+            value: rol_id, name: `${title}`
+            }));
+        promptDelRol(delRolChoices);
+    });
+
+};
+
+function promptDelRol(delRolChoices) {
+    inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "rol_id",
+        message: "Which role do you want to remove?",
+        choices: delRolChoices
+      }
+    ])
+    .then(function (answer) {
+
+      var query = `DELETE FROM roles WHERE ?`;
+      // when finished prompting, insert a new item into the db with that info
+      connection.query(query, { rol_id: answer.rol_id }, function (err, res) {
+        if (err) throw err;
+
+        pressAnyKey(chalk.green("Role removed! Press any key to view roles..."))
+        .then(() => {
+            viewRoles();
+        })
+      });
+    });
+}
+
+function updEmpRole(){
+    clear();
+
+    console.log(
+        chalk.green(
+`SIGNON                           BUSINESSCO LLC AT INDUSTRY PARK       DATE: ${getDate()}
+SYSTEM: STAFFMATRIX       BUSINESS ADMINISTRATIVE INFORMATION SYSTEMS  TIME: ${getTime()}
+TERMID: BOSS01                     U P D A T E  E M P L O Y E E
+=========================================================================================
+    `))
+    var query =
+    `SELECT 
+        emp_id, 
+        first_name, 
+        last_name, 
+        r.title, 
+        d.name AS Department, 
+        r.salary, 
+        (CONCAT m.first_name, ' ', m.last_name) AS manager
+    FROM employee AS e
+    JOIN roles AS r
+        ON e.role_id = r.rol_id
+    JOIN department AS d
+        ON d.dep_id = r.department_id
+    JOIN employee AS m
+        ON m.emp_id = e.manager_id`
+    
+    connection.query(query, function (err, res) {
+        if (err) throw err;
+
+        const empChoices = res.map(({ emp_id, first_name, last_name }) => ({
+            value: emp_id, name: `${first_name} ${last_name}`
+        }));
+
+        roleArray(empChoices);
+    })
+};
+
+function roleArray(empChoices) {
+    var query = 
+    `SELECT rol_id, title, salary
+    FROM roles`
+
+    let roleChoices;
+
+    connection.query(query, function (err, res) {
+        if(err) throw err;
+
+        roleChoices = res.map(({ id, title, salary }) => ({
+            value: rol_id, name: `${title}`, salary: `${salary}`
+        }));
+    
+    updEmpRolePrompt(empChoices, roleChoices);
+    });
+};
+
+
+function updEmpRolePrompt(empChoices, roleChoices) {
+    inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "emp_id",
+        message: "Which employee do you want to update roles on?",
+        choices: empChoices
+      },
+      {
+        type: "list",
+        name: "role_id",
+        message: "What is their new role?",
+        choices: roleChoices
+      },
+    ])
+    .then(function (answer) {
+
+      var query = `UPDATE employee SET role_id = ? WHERE emp_id = ?`
+      // when finished prompting, insert a new item into the db with that info
+      connection.query(query,
+        [ answer.role_id,  
+          answer.emp_id
+        ],
+        function (err, res) {
+          if (err) throw err;
+
+          console.table(res);
+          console.log(res.affectedRows + "Updated successfully!");
+
+          pressAnyKey(chalk.green("Employee Updated! Press any key to view employees..."))
+          .then(() => {
+              viewRoles();
+          })
+        });
+    });    
+}
 function updEmpMgr(){};
 
 
