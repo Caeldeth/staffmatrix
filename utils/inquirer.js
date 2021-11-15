@@ -41,7 +41,7 @@ function mainMenuPrompt() {
                     chalk.green(console.log("Logging off STAFFMATRIX...."));
                     chalk.green(console.log("Goodbye Human"));
                     connection.end;
-                    break;
+                    process.exit();
             };
         })
     )
@@ -853,13 +853,13 @@ TERMID: BOSS01                     U P D A T E  E M P L O Y E E
     `))
     var query =
     `SELECT 
-        emp_id, 
-        first_name, 
-        last_name, 
+        e.emp_id, 
+        e.first_name, 
+        e.last_name, 
         r.title, 
-        d.name AS Department, 
+        d.dep_name AS Department, 
         r.salary, 
-        (CONCAT m.first_name, ' ', m.last_name) AS manager
+        CONCAT (m.first_name, ' ', m.last_name) AS manager
     FROM employee AS e
     JOIN roles AS r
         ON e.role_id = r.rol_id
@@ -889,7 +889,7 @@ function roleArray(empChoices) {
     connection.query(query, function (err, res) {
         if(err) throw err;
 
-        roleChoices = res.map(({ id, title, salary }) => ({
+        roleChoices = res.map(({ rol_id, title, salary }) => ({
             value: rol_id, name: `${title}`, salary: `${salary}`
         }));
     
@@ -925,17 +925,100 @@ function updEmpRolePrompt(empChoices, roleChoices) {
         function (err, res) {
           if (err) throw err;
 
-          console.table(res);
-          console.log(res.affectedRows + "Updated successfully!");
-
           pressAnyKey(chalk.green("Employee Updated! Press any key to view employees..."))
           .then(() => {
-              viewRoles();
+              viewAll();
           })
         });
     });    
 }
-function updEmpMgr(){};
 
+function updEmpMgr(){
+    clear();
+
+    console.log(
+        chalk.green(
+`SIGNON                           BUSINESSCO LLC AT INDUSTRY PARK       DATE: ${getDate()}
+SYSTEM: STAFFMATRIX       BUSINESS ADMINISTRATIVE INFORMATION SYSTEMS  TIME: ${getTime()}
+TERMID: BOSS01                     U P D A T E  E M P L O Y E E
+=========================================================================================
+    `))
+    var query =
+    `SELECT 
+        e.emp_id, 
+        e.first_name, 
+        e.last_name, 
+        CONCAT (m.first_name, ' ', m.last_name) AS manager
+    FROM employee AS e
+    JOIN employee AS m
+        ON m.emp_id = e.manager_id`
+    
+    connection.query(query, function (err, res) {
+        if (err) throw err;
+
+        const emp2Choices = res.map(({ emp_id, first_name, last_name }) => ({
+            value: emp_id, name: `${first_name} ${last_name}`
+        }));
+
+        mgrArray(emp2Choices);
+    })
+};
+
+function mgrArray(emp2Choices) {
+    var query =
+    `SELECT 
+        emp_id, 
+        first_name, 
+        last_name 
+    FROM employee`
+
+    let mgrChoices;
+
+    connection.query(query, function (err, res) {
+        if(err) throw err;
+
+        mgrChoices = res.map(({ emp_id, first_name, last_name }) => ({
+            value: emp_id, name: `${first_name} ${last_name}`
+        }));
+    
+    updEmpMgrPrompt(emp2Choices, mgrChoices);
+    });
+};
+
+
+function updEmpMgrPrompt(emp2Choices, mgrChoices) {
+    inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "emp_id",
+        message: "Which employee do you want to update managers on?",
+        choices: emp2Choices
+      },
+      {
+        type: "list",
+        name: "mgr_id",
+        message: "Who is their new manager?",
+        choices: mgrChoices
+      },
+    ])
+    .then(function (answer) {
+
+      var query = `UPDATE employee SET manager_id = ? WHERE emp_id = ?`
+      // when finished prompting, insert a new item into the db with that info
+      connection.query(query,
+        [ answer.mgr_id,  
+          answer.emp_id
+        ],
+        function (err, res) {
+          if (err) throw err;
+
+          pressAnyKey(chalk.green("Employee Updated! Press any key to view employees..."))
+          .then(() => {
+              viewAll();
+          })
+        });
+    });    
+}
 
 module.exports = {mainScreen};
