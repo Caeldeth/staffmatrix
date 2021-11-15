@@ -3,12 +3,12 @@
 ![GitHub language count](https://img.shields.io/github/languages/count/caeldeth/staffmatrix?style=plastic)
 ![Lines of code](https://img.shields.io/tokei/lines/github/caeldeth/staffmatrix?style=plastic)
 ![GitHub package.json dependency version (prod)](https://img.shields.io/github/package-json/dependency-version/caeldeth/staffmatrix/inquirer?style=plastic)
-![GitHub package.json dependency version (prod)](https://img.shields.io/github/package-json/dependency-version/caeldeth/staffmatrix/dev/jest?style=plastic)
 ![GitHub package.json dependency version (prod)](https://img.shields.io/github/package-json/dependency-version/caeldeth/staffmatrix/chalk?style=plastic)
 ![GitHub package.json dependency version (prod)](https://img.shields.io/github/package-json/dependency-version/caeldeth/staffmatrix/clear-screen?style=plastic)
 ![GitHub package.json dependency version (prod)](https://img.shields.io/github/package-json/dependency-version/caeldeth/staffmatrix/mysql2?style=plastic)
 ![GitHub package.json dependency version (prod)](https://img.shields.io/github/package-json/dependency-version/caeldeth/staffmatrix/express?style=plastic)
 ![GitHub package.json dependency version (prod)](https://img.shields.io/github/package-json/dependency-version/caeldeth/staffmatrix/press-any-key?style=plastic)
+![GitHub package.json dependency version (dev dep on branch)](https://img.shields.io/github/package-json/dependency-version/caeldeth/staffmatrix/dev/jest?style=plastic)
 ![GitHub](https://img.shields.io/github/license/caeldeth/staffmatrix?style=plastic)
 
 ## Table of Contents
