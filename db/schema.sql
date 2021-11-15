@@ -21,12 +21,43 @@ CREATE TABLE employee (
 )
 
 /* Query for all Employees
-SELECT e.emp_id AS "Employee ID", e.first_name AS "First Name", e.last_name AS "Last Name", d.dep_name AS Department, r.title AS Title, FORMAT(r.salary,0) AS Salary, CONCAT(m.first_name, " ", m.last_name) AS Manager
+SELECT e.emp_id AS "Employee ID", e.first_name AS "First Name", 
+    e.last_name AS "Last Name", d.dep_name AS Department, 
+    r.title AS Title, FORMAT(r.salary,0) AS Salary, 
+    CONCAT(m.first_name, " ", m.last_name) AS Manager
 FROM employee e
 LEFT JOIN roles r
 ON e.role_id = r.rol_id
 LEFT JOIN department d
 ON r.department_id = d.dep_id
-INNER JOIN employee m
+LEFT JOIN employee m
 on m.emp_id = e.manager_id;
 */
+
+/* Query for Budget
+SELECT d.dep_id, d.dep_name, CONCAT(FORMAT(SUM(r.salary),0)) AS budget
+  FROM employee e
+  LEFT JOIN roles r
+	ON e.role_id = r.rol_id
+  LEFT JOIN department d
+  ON d.dep_id = r.department_id
+  GROUP BY d.dep_id, d.dep_name
+*/
+
+/* Query for View All Departments
+
+/* Query for View All Roles
+
+/* Query for Add a Department
+
+/* Query for Add a Role
+
+/* Query for Add an Employee
+
+/* Query for Update an Employee Role
+
+/* Query for Update an Employee Manager
+
+/* Query for View Employees by Department
+
+/* Query for Delete Departments, Roles, Managers
