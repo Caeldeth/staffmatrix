@@ -23,11 +23,13 @@
   "homepage": "https://github.com/Caeldeth/staffmatrix#readme",
   "dependencies": {
     "chalk": "^4.1.2",
-    "clear": "^0.1.0",
+    "clear-screen": "^1.0.0",
+    "cls.sh": "^1.0.4",
     "console.table": "^0.10.0",
     "express": "^4.17.1",
     "inquirer": "^8.2.0",
-    "mysql2": "^2.3.3"
+    "mysql2": "^2.3.3",
+    "press-any-key": "^0.1.1"
   },
   "devDependencies": {
     "jest": "^27.3.1"

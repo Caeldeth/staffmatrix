@@ -21,43 +21,74 @@ CREATE TABLE employee (
 )
 
 /* Query for all Employees
-SELECT e.emp_id AS "Employee ID", e.first_name AS "First Name", 
-    e.last_name AS "Last Name", d.dep_name AS Department, 
-    r.title AS Title, FORMAT(r.salary,0) AS Salary, 
+SELECT 
+    e.emp_id AS `Employee ID`, 
+    e.first_name AS `First Name`, 
+    e.last_name AS `Last Name`, 
+    d.dep_name AS Department, 
+    r.title AS Title, 
+    FORMAT(r.salary,0) AS Salary, 
     CONCAT(m.first_name, " ", m.last_name) AS Manager
 FROM employee e
 LEFT JOIN roles r
-ON e.role_id = r.rol_id
+    ON e.role_id = r.rol_id
 LEFT JOIN department d
-ON r.department_id = d.dep_id
+    ON r.department_id = d.dep_id
 LEFT JOIN employee m
-on m.emp_id = e.manager_id;
+    ON m.emp_id = e.manager_id
+ORDER BY `Last Name` ASC
 */
 
 /* Query for Budget
-SELECT d.dep_id, d.dep_name, CONCAT(FORMAT(SUM(r.salary),0)) AS budget
-  FROM employee e
-  LEFT JOIN roles r
+SELECT 
+    d.dep_id AS `Department ID`, 
+    d.dep_name as `Department Name`, 
+    CONCAT(FORMAT(SUM(r.salary),0)) AS Budget
+FROM employee 
+    AS e
+LEFT JOIN roles 
+    AS r
 	ON e.role_id = r.rol_id
-  LEFT JOIN department d
-  ON d.dep_id = r.department_id
-  GROUP BY d.dep_id, d.dep_name
+LEFT JOIN department 
+    AS d
+    ON d.dep_id = r.department_id
+GROUP BY d.dep_id, d.dep_name
 */
 
 /* Query for View All Departments
+SELECT 
+    dep_id AS `Department Id`,
+    dep_name AS `Department Name`
+FROM department
+ORDER 
+    BY `Department Name` ASC
 
 /* Query for View All Roles
-
-/* Query for Add a Department
-
-/* Query for Add a Role
-
-/* Query for Add an Employee
-
-/* Query for Update an Employee Role
-
-/* Query for Update an Employee Manager
+SELECT 
+    r.rol_id AS `Role ID`, 
+    r.title AS Title, 
+    FORMAT(r.salary,0) AS Salary, 
+    d.dep_name AS `Department Name`
+FROM roles 
+    AS r 
+INNER JOIN department AS d 
+    ON r.department_id = d.dep_id 
+ORDER 
+    BY `Department Name` ASC
 
 /* Query for View Employees by Department
-
-/* Query for Delete Departments, Roles, Managers
+SELECT 
+    e.emp_id AS `Employee ID`, 
+    e.first_name AS `First Name`, 
+    e.last_name AS `Last Name`, 
+    r.title AS Title, 
+    d.dep_name AS Department 
+FROM employee 
+    AS e
+JOIN roles 
+    AS r
+	ON e.role_id = r.rol_id
+JOIN department 
+    AS d
+    ON d.dep_id = r.department_id
+WHERE d.dep_id = ?
