@@ -1,7 +1,7 @@
 const inquirer = require("inquirer");
 var clear = require('clear-screen');
 const chalk = require('chalk');
-const { getDate, getTime } = require('../utils/functions');
+const { getDate, getTime, getDepartments } = require('../utils/functions');
 const pressAnyKey = require('press-any-key');
 const connection = require('../db/connection');
 require('console.table');
@@ -164,10 +164,10 @@ function updMenuPrompt(){
             .then(function({ task }){
                 switch (task) {
                     case "Update Employee Role":
-                        updEmp();
+                        updEmpRole();
                         break;
                     case "Update Employee Manager":
-                        updDep();
+                        updEmpMgr();
                         break;
                     case "Return to Main Menu":
                         menuScreen();
@@ -335,8 +335,8 @@ TERMID: BOSS01                     A L L  D E P A R T M E N T S
 `))
     var query = 
     `SELECT 
-        dep_id AS Id  
-        dep_name AS Department, 
+        dep_id AS Id,  
+        dep_name AS Department 
     FROM department
     ORDER BY Department ASC`
 
@@ -363,17 +363,15 @@ TERMID: BOSS01                          A L L  R O L E S
 `))
     var query = 
     `SELECT 
-        r.rol_id AS Id  
+        r.rol_id AS Id,  
         r.title AS Title,
         FORMAT(r.salary,0) AS Salary,
         d.dep_name AS Department
-    FROM department
-        AS d
     FROM roles
         AS r
     LEFT JOIN department d
         ON r.department_id = d.dep_id
-    ORDER BY Department ASC`
+    ORDER BY Title ASC`
 
     connection.query(query, function (err,res) {
         if(err) throw err;
@@ -389,10 +387,8 @@ TERMID: BOSS01                          A L L  R O L E S
 function viewByDep(){
     var query = 
     `SELECT 
-        dep_id 
-            AS Id, 
-        dep_name 
-            AS Name 
+        dep_id AS Id, 
+        dep_name AS Name 
     FROM department 
     ORDER 
         BY Name ASC`
@@ -515,24 +511,161 @@ TERMID: BOSS01                      A D D  D E P A R T M E N T
           message: "What department would you like to add?"
         }
       ]).then(function(answer) {
-        connection.query(`INSERT INTO department (name) VALUES ('${answer.addDep}')`, (err, res) => {
+        connection.query(`INSERT INTO department (dep_name) VALUES ('${answer.addDep}')`, (err, res) => {
           if (err) throw err;
-          pressAnyKey(chalk.green("Department added! Press any key to View Departments..."))
+          pressAnyKey(chalk.green("Department added! Press any key to view departments..."))
           .then(() => {
-              viewMenu();
+              viewDeps();
           })    
         }) 
       })
 };
 
-addEmp();
-addDep();
-addRole();
-delEmp();
-delDep();
-delRole();
-updEmpRole();
-updEmpMgr();
+function addRole(){};
+clear();
+
+console.log(
+    chalk.green(
+`SIGNON                           BUSINESSCO LLC AT INDUSTRY PARK       DATE: ${getDate()}
+SYSTEM: STAFFMATRIX       BUSINESS ADMINISTRATIVE INFORMATION SYSTEMS  TIME: ${getTime()}
+TERMID: BOSS01                            A D D  R O L E
+=========================================================================================
+`))
+var query =
+`SELECT d.dep_id, d.dep_name, FORMAT(r.salary,0) AS budget
+FROM employee e
+JOIN roles r
+ON e.role_id = r.rol_id
+JOIN department d
+ON d.dep_id = r.department_id
+GROUP BY d.dep_id, d.dep_name`
+
+connection.query(query, function (err, res) {
+if (err) throw err;
+
+const departmentChoices = res.map(({ id, name }) => ({
+  value: id, name: `${id} ${name}`
+}));
+
+
+promptAddRole(departmentChoices);
+});
+
+function promptAddRole(departmentChoices) {
+
+    inquirer
+      .prompt([
+        {
+          type: "input",
+          name: "roleTitle",
+          message: "Role title?"
+        },
+        {
+          type: "input",
+          name: "roleSalary",
+          message: "Role Salary"
+        },
+        {
+          type: "list",
+          name: "departmentId",
+          message: "Department?",
+          choices: departmentChoices
+        },
+      ])
+      .then(function (answer) {
+  
+        var query = `INSERT INTO roles SET ?`
+  
+        connection.query(query, {
+          title: answer.title,
+          salary: answer.salary,
+          department_id: answer.departmentId
+        },
+          function (err, res) {
+            if (err) throw err;
+  
+            console.table(res);
+            pressAnyKey(chalk.green("Role added! Press any key to view roles..."))
+            .then(() => {
+                viewRoles();
+            })  
+          });
+  
+      });
+  }
+
+function addEmp(){
+    clear();
+
+    console.log(
+        chalk.green(
+`SIGNON                           BUSINESSCO LLC AT INDUSTRY PARK       DATE: ${getDate()}
+SYSTEM: STAFFMATRIX       BUSINESS ADMINISTRATIVE INFORMATION SYSTEMS  TIME: ${getTime()}
+TERMID: BOSS01                        A D D  E M P L O Y E E
+=========================================================================================
+    `))
+    var query =
+    `SELECT r.rol_id, r.title, r.salary 
+    FROM role AS r`
+
+  connection.query(query, function (err, res) {
+    if (err) throw err;
+
+    const roleChoices = res.map(({ id, title, salary }) => ({
+      value: id, title: `${title}`, salary: `${salary}`
+    }));
+
+    promptInsert(roleChoices);
+  });
+}
+
+function promptInsert(roleChoices) {
+
+  inquirer
+    .prompt([
+      {
+        type: "input",
+        name: "first_name",
+        message: "What is the employee's first name?"
+      },
+      {
+        type: "input",
+        name: "last_name",
+        message: "What is the employee's last name?"
+      },
+      {
+        type: "list",
+        name: "roleId",
+        message: "What is the employee's role?",
+        choices: roleChoices
+      },
+    ])
+    .then(function (answer) {
+      var query = `INSERT INTO employee SET ?`
+      connection.query(query,
+        {
+          first_name: answer.first_name,
+          last_name: answer.last_name,
+          role_id: answer.roleId,
+          manager_id: answer.managerId,
+        },
+        function (err, res) {
+          if (err) throw err;
+          console.table(res);
+          pressAnyKey(chalk.green("Employee added! Press any key to view employees..."))
+          .then(() => {
+              viewRoles();
+          })
+        });
+    });
+}
+
+
+function delEmp(){};
+function delDep(){};
+function delRole(){};
+function updEmpRole(){};
+function updEmpMgr(){};
 
 
 module.exports = {mainScreen};

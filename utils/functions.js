@@ -1,3 +1,5 @@
+const connection = require('../db/connection');
+
 function getDate(){
     var today = new Date();
     var dd = today.getDate();
@@ -24,4 +26,4 @@ function getTime(){
     return curTime
 }
 
-module.exports = {getDate, getTime};
+module.exports = {getDate, getTime, getRoles, getManagers, getDepartments};
