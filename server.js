@@ -1,4 +1,4 @@
-const { mainScreen } = require('./utils/screenart');
+const { mainScreen } = require('./utils/inquirer');
 
 mainScreen();                                                       
                                                                                     
